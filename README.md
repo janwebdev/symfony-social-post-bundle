@@ -8,7 +8,7 @@ This is a [Symfony](https://www.symfony.com) bundle written in [PHP 8.1](https:/
 ## How to install it?
 Recommended way is through [Composer](https://getcomposer.org/download/)
 
-    composer require janwebdev/social-post-bundle
+    composer require janwebdev/symfony-social-post-bundle
     
 
 ----
