@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  *
  * @license https://opensource.org/licenses/MIT
  *
- * @see https://github.com/janwebdev/social-post-bundle
+ * @see https://github.com/janwebdev/symfony-social-post-bundle
  */
 class SocialPostBundleTest extends TestCase
 {

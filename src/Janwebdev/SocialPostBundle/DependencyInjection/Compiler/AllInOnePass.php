@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\Reference;
  *
  * @license https://opensource.org/licenses/MIT
  *
- * @see https://github.com/janwebdev/social-post-bundle
+ * @see https://github.com/janwebdev/symfony-social-post-bundle
  */
 class AllInOnePass implements CompilerPassInterface
 {

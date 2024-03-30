@@ -15,7 +15,7 @@ use Symfony\Component\Yaml\Parser;
  *
  * @license https://opensource.org/licenses/MITs
  *
- * @see https://github.com/janwebdev/social-post-bundle
+ * @see https://github.com/janwebdev/symfony-social-post-bundle
  */
 class SocialPostExtensionTest extends TestCase
 {
