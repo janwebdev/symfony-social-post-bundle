@@ -19,12 +19,12 @@
 
     "autoload": {
         "psr-4": {
-            "MartinGeorgiev\\": "src/Janwebdev/"
+            "Janwebdev\\": "src/Janwebdev/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\MartinGeorgiev\\": "tests/Janwebdev/"
+            "Tests\\Janwebdev\\": "tests/Janwebdev/"
         }
     },
 
