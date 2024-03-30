@@ -1,0 +1,5 @@
+bin
+docs/tests/coverage
+vendor
+.idea
+composer.lock

@@ -1,0 +1,17 @@
+parameters:
+    social_post.facebook.provider: Janwebdev\SocialPost\SocialNetwork\Facebook\FacebookSDK
+
+services:
+    _defaults:
+        public: false
+
+    facebook:
+        class: JanuSoftware\Facebook\Facebook
+        arguments:
+            $config: "%social_post.configuration.facebook%"
+    
+    social_post.facebook:
+        class: "%social_post.facebook.provider%"
+        arguments:
+            $facebook: "@facebook"
+            $pageId: "%social_post.configuration.facebook.page_id%"

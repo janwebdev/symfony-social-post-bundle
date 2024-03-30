@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="false"
+        convertWarningsToExceptions="true"
+        stopOnFailure="false"
+        bootstrap="../../vendor/autoload.php"
+        verbose="true">
+
+    <testsuites>
+        <testsuite name="SocialPost Bundle Test Suite">
+            <directory>../../tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist>
+            <directory suffix=".php">../../src</directory>
+        </whitelist>
+    </filter>
+
+</phpunit>
