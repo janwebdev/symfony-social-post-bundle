@@ -25,7 +25,7 @@ Recommended way is through [Composer](https://getcomposer.org/download/)
                 default_access_token: "YOUR-FACEBOOK-NON-EXPIRING-PAGE-ACCESS-TOKEN"
                 page_id: "YOUR-FACEBOOK-PAGE-ID"
                 enable_beta_mode: true
-                default_graph_version: "v2.8"             # Optional, also supports "mcrypt" and "urandom". Default uses the latest graph version.
+                default_graph_version: "v15.0"
                 persistent_data_handler: "memory"         # Optional, also supports "session". Default is "memory".
                 pseudo_random_string_generator: "openssl" # Optional, also supports "mcrypt" and "urandom". Default is "openssl".
                 http_client_handler: "curl"               # Optional, also supports "stream" and "guzzle". Default is "curl".
