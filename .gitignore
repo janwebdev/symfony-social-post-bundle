@@ -3,3 +3,6 @@ docs/tests/coverage
 vendor
 .idea
 composer.lock
+.phpunit.result.cache
+*.cache
+.DS_Store
