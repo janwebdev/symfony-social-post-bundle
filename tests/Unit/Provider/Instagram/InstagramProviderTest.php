@@ -168,4 +168,19 @@ class InstagramProviderTest extends TestCase
         $this->assertTrue($result->isFailure());
         $this->assertStringContainsString('failed', strtolower($result->getErrorMessage() ?? ''));
     }
+
+    public function testPublishFailsWhenContainerTimesOut(): void
+    {
+        $message = MessageBuilder::create()->setText('Test')->build();
+
+        $this->clientMock->method('isConfigured')->willReturn(true);
+        $this->clientMock->method('createMediaContainer')->willReturn(['id' => 'container123']);
+        $this->clientMock->method('getContainerStatus')
+            ->willReturn(['status_code' => 'IN_PROGRESS']); // never becomes FINISHED
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isFailure());
+        $this->assertStringContainsString('timed out', strtolower($result->getErrorMessage() ?? ''));
+    }
 }
