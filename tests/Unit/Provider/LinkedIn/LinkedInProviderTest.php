@@ -46,7 +46,7 @@ class LinkedInProviderTest extends TestCase
             ->build();
 
         $this->clientMock->expects($this->once())
-            ->method('createShare')
+            ->method('createPost')
             ->willReturn(['id' => 'urn:li:share:1234567']);
 
         $result = $this->provider->publish($message);
@@ -64,7 +64,7 @@ class LinkedInProviderTest extends TestCase
             ->build();
 
         $this->clientMock->expects($this->once())
-            ->method('createShare')
+            ->method('createPost')
             ->with($this->callback(function ($data) {
                 return isset($data['content']['article']['source'])
                     && $data['content']['article']['source'] === 'https://example.com/article';
@@ -81,12 +81,31 @@ class LinkedInProviderTest extends TestCase
         $message = MessageBuilder::create()->setText('Test')->build();
 
         $this->clientMock->expects($this->once())
-            ->method('createShare')
+            ->method('createPost')
             ->willThrowException(new \RuntimeException('LinkedIn API Error'));
 
         $result = $this->provider->publish($message);
 
         $this->assertTrue($result->isFailure());
         $this->assertStringContainsString('LinkedIn API Error', $result->getErrorMessage());
+    }
+
+    public function testPublishSuccessWithNewPostsApi(): void
+    {
+        $message = MessageBuilder::create()
+            ->setText('LinkedIn post via new API')
+            ->build();
+
+        $this->clientMock->method('isConfigured')->willReturn(true);
+
+        $this->clientMock->expects($this->once())
+            ->method('createPost')
+            ->willReturn(['id' => 'urn:li:share:987654321']);
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertEquals('urn:li:share:987654321', $result->getPostId());
+        $this->assertStringContainsString('987654321', $result->getPostUrl() ?? '');
     }
 }

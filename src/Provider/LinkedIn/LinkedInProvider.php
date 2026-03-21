@@ -15,7 +15,7 @@ use Psr\Log\NullLogger;
  *
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
- * @see https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/share-api
+ * @see https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api
  */
 final readonly class LinkedInProvider implements ProviderInterface
 {
@@ -44,9 +44,9 @@ final readonly class LinkedInProvider implements ProviderInterface
 
             $this->logger->debug('Posting to LinkedIn', ['data' => $shareData]);
 
-            $response = $this->client->createShare($shareData);
+            $response = $this->client->createPost($shareData);
 
-            if (isset($response['id'])) {
+            if (isset($response['id']) && is_string($response['id'])) {
                 $shareId = $response['id'];
                 // Extract URN from response
                 $shareUrn = $response['id'];
