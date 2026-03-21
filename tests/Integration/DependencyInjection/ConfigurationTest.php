@@ -161,6 +161,35 @@ class ConfigurationTest extends TestCase
         $this->assertEquals('v1.0', $processedConfig['providers']['threads']['api_version']);
     }
 
+    public function testPinterestConfiguration(): void
+    {
+        $config = [
+            'providers' => [
+                'pinterest' => [
+                    'enabled' => true,
+                    'board_id' => '123456789',
+                    'access_token' => 'ptest_abc123',
+                ],
+            ],
+        ];
+
+        $processedConfig = $this->processor->processConfiguration($this->configuration, [$config]);
+
+        $this->assertTrue($processedConfig['providers']['pinterest']['enabled']);
+        $this->assertEquals('123456789', $processedConfig['providers']['pinterest']['board_id']);
+        $this->assertEquals('ptest_abc123', $processedConfig['providers']['pinterest']['access_token']);
+    }
+
+    public function testPinterestDefaultsToDisabled(): void
+    {
+        $config = ['providers' => []];
+
+        $processedConfig = $this->processor->processConfiguration($this->configuration, [$config]);
+
+        $this->assertFalse($processedConfig['providers']['pinterest']['enabled']);
+        $this->assertEquals('', $processedConfig['providers']['pinterest']['board_id']);
+    }
+
     public function testDefaultValues(): void
     {
         $config = ['providers' => []];

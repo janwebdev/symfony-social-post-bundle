@@ -61,8 +61,10 @@ class SocialPostExtension extends Extension
             'access_token' => '',
             'api_version' => 'v1.0',
         ],
-        // NOTE: 'pinterest' is NOT included here yet.
-        // It will be added in Task 8 together with the Configuration.php node.
+        'pinterest' => [
+            'board_id' => '',
+            'access_token' => '',
+        ],
     ];
 
     public function load(array $configs, ContainerBuilder $container): void

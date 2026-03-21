@@ -85,6 +85,13 @@ class Configuration implements ConfigurationInterface
                                 ->scalarNode('api_version')->defaultValue('v1.0')->end()
                             ->end()
                         ->end()
+                        ->arrayNode('pinterest')
+                            ->canBeEnabled()
+                            ->children()
+                                ->scalarNode('board_id')->defaultValue('')->end()
+                                ->scalarNode('access_token')->defaultValue('')->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();
