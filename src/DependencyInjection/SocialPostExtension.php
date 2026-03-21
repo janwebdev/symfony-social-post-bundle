@@ -17,6 +17,54 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  */
 class SocialPostExtension extends Extension
 {
+    /**
+     * Default parameter values for each provider.
+     * All parameters must always be set (even when disabled) for services.yaml compilation.
+     *
+     * @var array<string, array<string, string>>
+     */
+    private const PROVIDER_DEFAULTS = [
+        'twitter' => [
+            'api_key' => '',
+            'api_secret' => '',
+            'access_token' => '',
+            'access_token_secret' => '',
+        ],
+        'facebook' => [
+            'page_id' => '',
+            'access_token' => '',
+            'graph_version' => 'v22.0',
+        ],
+        'linkedin' => [
+            'organization_id' => '',
+            'access_token' => '',
+        ],
+        'telegram' => [
+            'bot_token' => '',
+            'channel_id' => '',
+        ],
+        'instagram' => [
+            'account_id' => '',
+            'access_token' => '',
+            'graph_version' => 'v22.0',
+        ],
+        'discord' => [
+            'webhook_url' => '',
+        ],
+        'whatsapp' => [
+            'phone_number_id' => '',
+            'access_token' => '',
+            'api_version' => 'v22.0',
+        ],
+        'threads' => [
+            'user_id' => '',
+            'access_token' => '',
+            'api_version' => 'v1.0',
+        ],
+        // NOTE: 'pinterest' is NOT included here yet.
+        // It will be added in Task 8 together with the Configuration.php node.
+    ];
+
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
@@ -35,81 +83,19 @@ class SocialPostExtension extends Extension
 
     private function configureProviders(ContainerBuilder $container, array $providers): void
     {
-        // Twitter
-        if (isset($providers['twitter']['enabled']) && $providers['twitter']['enabled']) {
-            $container->setParameter('social_post.twitter.enabled', true);
-            $container->setParameter('social_post.twitter.api_key', $providers['twitter']['api_key'] ?? '');
-            $container->setParameter('social_post.twitter.api_secret', $providers['twitter']['api_secret'] ?? '');
-            $container->setParameter('social_post.twitter.access_token', $providers['twitter']['access_token'] ?? '');
-            $container->setParameter('social_post.twitter.access_token_secret', $providers['twitter']['access_token_secret'] ?? '');
-        } else {
-            $container->setParameter('social_post.twitter.enabled', false);
-        }
+        foreach (self::PROVIDER_DEFAULTS as $network => $defaults) {
+            $networkConfig = $providers[$network] ?? [];
+            $enabled = $networkConfig['enabled'] ?? false;
 
-        // Facebook
-        if (isset($providers['facebook']['enabled']) && $providers['facebook']['enabled']) {
-            $container->setParameter('social_post.facebook.enabled', true);
-            $container->setParameter('social_post.facebook.page_id', $providers['facebook']['page_id'] ?? '');
-            $container->setParameter('social_post.facebook.access_token', $providers['facebook']['access_token'] ?? '');
-            $container->setParameter('social_post.facebook.graph_version', $providers['facebook']['graph_version'] ?? 'v20.0');
-        } else {
-            $container->setParameter('social_post.facebook.enabled', false);
-        }
+            $container->setParameter("social_post.{$network}.enabled", $enabled);
 
-        // LinkedIn
-        if (isset($providers['linkedin']['enabled']) && $providers['linkedin']['enabled']) {
-            $container->setParameter('social_post.linkedin.enabled', true);
-            $container->setParameter('social_post.linkedin.organization_id', $providers['linkedin']['organization_id'] ?? '');
-            $container->setParameter('social_post.linkedin.access_token', $providers['linkedin']['access_token'] ?? '');
-        } else {
-            $container->setParameter('social_post.linkedin.enabled', false);
-        }
-
-        // Telegram
-        if (isset($providers['telegram']['enabled']) && $providers['telegram']['enabled']) {
-            $container->setParameter('social_post.telegram.enabled', true);
-            $container->setParameter('social_post.telegram.bot_token', $providers['telegram']['bot_token'] ?? '');
-            $container->setParameter('social_post.telegram.channel_id', $providers['telegram']['channel_id'] ?? '');
-        } else {
-            $container->setParameter('social_post.telegram.enabled', false);
-        }
-
-        // Instagram
-        if (isset($providers['instagram']['enabled']) && $providers['instagram']['enabled']) {
-            $container->setParameter('social_post.instagram.enabled', true);
-            $container->setParameter('social_post.instagram.account_id', $providers['instagram']['account_id'] ?? '');
-            $container->setParameter('social_post.instagram.access_token', $providers['instagram']['access_token'] ?? '');
-            $container->setParameter('social_post.instagram.graph_version', $providers['instagram']['graph_version'] ?? 'v20.0');
-        } else {
-            $container->setParameter('social_post.instagram.enabled', false);
-        }
-
-        // Discord
-        if (isset($providers['discord']['enabled']) && $providers['discord']['enabled']) {
-            $container->setParameter('social_post.discord.enabled', true);
-            $container->setParameter('social_post.discord.webhook_url', $providers['discord']['webhook_url'] ?? '');
-        } else {
-            $container->setParameter('social_post.discord.enabled', false);
-        }
-
-        // WhatsApp
-        if (isset($providers['whatsapp']['enabled']) && $providers['whatsapp']['enabled']) {
-            $container->setParameter('social_post.whatsapp.enabled', true);
-            $container->setParameter('social_post.whatsapp.phone_number_id', $providers['whatsapp']['phone_number_id'] ?? '');
-            $container->setParameter('social_post.whatsapp.access_token', $providers['whatsapp']['access_token'] ?? '');
-            $container->setParameter('social_post.whatsapp.api_version', $providers['whatsapp']['api_version'] ?? 'v20.0');
-        } else {
-            $container->setParameter('social_post.whatsapp.enabled', false);
-        }
-
-        // Threads
-        if (isset($providers['threads']['enabled']) && $providers['threads']['enabled']) {
-            $container->setParameter('social_post.threads.enabled', true);
-            $container->setParameter('social_post.threads.user_id', $providers['threads']['user_id'] ?? '');
-            $container->setParameter('social_post.threads.access_token', $providers['threads']['access_token'] ?? '');
-            $container->setParameter('social_post.threads.api_version', $providers['threads']['api_version'] ?? 'v1.0');
-        } else {
-            $container->setParameter('social_post.threads.enabled', false);
+            // Always set all parameters — required even when disabled for services.yaml compilation
+            foreach ($defaults as $param => $default) {
+                $container->setParameter(
+                    "social_post.{$network}.{$param}",
+                    $networkConfig[$param] ?? $default,
+                );
+            }
         }
     }
 }
