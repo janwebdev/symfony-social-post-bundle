@@ -11,14 +11,15 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * WhatsApp Channel provider (BETA/UNSTABLE).
+ * WhatsApp provider — sends messages via WhatsApp Business Cloud API.
  *
- * WARNING: WhatsApp Channels API is in beta and may change.
- * This provider is experimental and may require updates when API stabilizes.
+ * @deprecated Will be removed in v4.0. WhatsApp Business Cloud API does NOT support
+ *             posting to public Channels. It can only send template messages to users
+ *             who have explicitly opted in. Use Telegram for broadcast channel posting.
  *
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
- * @see https://developers.facebook.com/docs/whatsapp
+ * @see https://developers.facebook.com/docs/whatsapp/cloud-api
  */
 final readonly class WhatsAppProvider implements ProviderInterface
 {
@@ -42,6 +43,11 @@ final readonly class WhatsAppProvider implements ProviderInterface
 
     public function publish(Message $message): PublishResult
     {
+        trigger_error(
+            'WhatsAppProvider is deprecated and will be removed in v4.0. WhatsApp Business Cloud API does not support posting to public Channels.',
+            \E_USER_DEPRECATED,
+        );
+
         try {
             $this->logger->warning('Publishing to WhatsApp Channel (BETA API - may be unstable)');
 
