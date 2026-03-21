@@ -21,7 +21,7 @@ class InstagramProviderTest extends TestCase
     protected function setUp(): void
     {
         $this->clientMock = $this->createMock(InstagramClient::class);
-        $this->provider = new InstagramProvider($this->clientMock, new NullLogger());
+        $this->provider = new InstagramProvider($this->clientMock, new NullLogger(), pollIntervalSeconds: 0);
     }
 
     public function testGetName(): void
@@ -50,6 +50,9 @@ class InstagramProviderTest extends TestCase
         $this->clientMock->expects($this->once())
             ->method('createMediaContainer')
             ->willReturn(['id' => 'container_123']);
+
+        $this->clientMock->method('getContainerStatus')
+            ->willReturn(['status_code' => 'FINISHED']);
 
         // Step 2: Publish container
         $this->clientMock->expects($this->once())
@@ -110,9 +113,59 @@ class InstagramProviderTest extends TestCase
             }))
             ->willReturn(['id' => 'container_123']);
 
+        $this->clientMock->method('getContainerStatus')
+            ->willReturn(['status_code' => 'FINISHED']);
+
         $this->clientMock->method('publishMediaContainer')
             ->willReturn(['id' => 'post_456']);
 
         $this->provider->publish($message);
+    }
+
+    public function testPublishPollesContainerStatusBeforePublishing(): void
+    {
+        $message = MessageBuilder::create()
+            ->setText('Test post')
+            ->build();
+
+        $this->clientMock->method('isConfigured')->willReturn(true);
+
+        $this->clientMock->expects($this->once())
+            ->method('createMediaContainer')
+            ->willReturn(['id' => 'container123']);
+
+        // Polling must be called — first returns IN_PROGRESS, then FINISHED
+        $this->clientMock->expects($this->exactly(2))
+            ->method('getContainerStatus')
+            ->with('container123')
+            ->willReturnOnConsecutiveCalls(
+                ['status_code' => 'IN_PROGRESS'],
+                ['status_code' => 'FINISHED'],
+            );
+
+        $this->clientMock->expects($this->once())
+            ->method('publishMediaContainer')
+            ->with('container123')
+            ->willReturn(['id' => 'post456']);
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertEquals('post456', $result->getPostId());
+    }
+
+    public function testPublishFailsOnContainerError(): void
+    {
+        $message = MessageBuilder::create()->setText('Test')->build();
+
+        $this->clientMock->method('isConfigured')->willReturn(true);
+        $this->clientMock->method('createMediaContainer')->willReturn(['id' => 'container123']);
+        $this->clientMock->method('getContainerStatus')
+            ->willReturn(['status_code' => 'ERROR']);
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isFailure());
+        $this->assertStringContainsString('failed', strtolower($result->getErrorMessage() ?? ''));
     }
 }
