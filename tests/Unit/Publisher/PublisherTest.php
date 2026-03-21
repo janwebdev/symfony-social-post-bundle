@@ -15,6 +15,7 @@ use Janwebdev\SocialPostBundle\Publisher\PublishMessageCommand;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
@@ -46,17 +47,20 @@ class PublisherTest extends TestCase
 
         $message = MessageBuilder::create()->setText('Test')->build();
 
-        $this->eventDispatcherMock->expects($this->exactly(2))
-            ->method('dispatch')
-            ->withConsecutive(
-                [$this->isInstanceOf(BeforePublishEvent::class)],
-                [$this->isInstanceOf(AfterPublishEvent::class)]
-            );
+        $dispatchedEvents = [];
+        $this->eventDispatcherMock->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+                return $event;
+            });
 
         $results = $this->publisher->publish($message);
 
         $this->assertEquals(2, $results->count());
         $this->assertTrue($results->isAllSuccessful());
+        $this->assertCount(2, $dispatchedEvents);
+        $this->assertInstanceOf(BeforePublishEvent::class, $dispatchedEvents[0]);
+        $this->assertInstanceOf(AfterPublishEvent::class, $dispatchedEvents[1]);
     }
 
     public function testPublishSkipsUnconfiguredProviders(): void
@@ -119,13 +123,12 @@ class PublisherTest extends TestCase
             new NullLogger()
         );
 
-        $this->eventDispatcherMock->expects($this->exactly(3))
-            ->method('dispatch')
-            ->withConsecutive(
-                [$this->isInstanceOf(BeforePublishEvent::class)],
-                [$this->isInstanceOf(PublishFailedEvent::class)],
-                [$this->isInstanceOf(AfterPublishEvent::class)]
-            );
+        $dispatchedEvents = [];
+        $this->eventDispatcherMock->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+                return $event;
+            });
 
         $message = MessageBuilder::create()->setText('Test')->build();
         $results = $this->publisher->publish($message);
@@ -134,6 +137,10 @@ class PublisherTest extends TestCase
         $result = $results->getResult('twitter');
         $this->assertTrue($result->isFailure());
         $this->assertStringContainsString('Provider error', $result->getErrorMessage());
+        $this->assertCount(3, $dispatchedEvents);
+        $this->assertInstanceOf(BeforePublishEvent::class, $dispatchedEvents[0]);
+        $this->assertInstanceOf(PublishFailedEvent::class, $dispatchedEvents[1]);
+        $this->assertInstanceOf(AfterPublishEvent::class, $dispatchedEvents[2]);
     }
 
     public function testPublishAsync(): void
@@ -149,7 +156,8 @@ class PublisherTest extends TestCase
 
         $this->messageBusMock->expects($this->once())
             ->method('dispatch')
-            ->with($this->isInstanceOf(PublishMessageCommand::class));
+            ->with($this->isInstanceOf(PublishMessageCommand::class))
+            ->willReturn(new Envelope(new PublishMessageCommand($message)));
 
         $this->publisher->publishAsync($message);
     }

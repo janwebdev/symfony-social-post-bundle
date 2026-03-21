@@ -14,7 +14,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
  */
-final readonly class TwitterClient
+readonly class TwitterClient
 {
     private const API_BASE_URL = 'https://api.twitter.com/2';
 

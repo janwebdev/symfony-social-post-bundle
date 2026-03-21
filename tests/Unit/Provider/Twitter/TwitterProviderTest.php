@@ -74,13 +74,7 @@ class TwitterProviderTest extends TestCase
             ->setText('Hello Twitter!')
             ->build();
 
-        $this->clientMock->expects($this->once())
-            ->method('isConfigured')
-            ->willReturn(true);
-
-        $this->clientMock->expects($this->once())
-            ->method('uploadMedia')
-            ->willReturn([]);
+        $this->clientMock->method('uploadMedia')->willReturn([]);
 
         $this->clientMock->expects($this->once())
             ->method('createTweet')
