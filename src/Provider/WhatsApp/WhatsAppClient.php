@@ -23,7 +23,7 @@ readonly class WhatsAppClient
         private ClientInterface $httpClient,
         private string $phoneNumberId,
         private string $accessToken,
-        private string $apiVersion = 'v20.0',
+        private string $apiVersion = 'v22.0',
     ) {
     }
 

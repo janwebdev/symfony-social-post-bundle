@@ -59,7 +59,7 @@ class ConfigurationTest extends TestCase
 
         $this->assertTrue($processedConfig['providers']['facebook']['enabled']);
         $this->assertEquals('123456', $processedConfig['providers']['facebook']['page_id']);
-        $this->assertEquals('v20.0', $processedConfig['providers']['facebook']['graph_version']);
+        $this->assertEquals('v22.0', $processedConfig['providers']['facebook']['graph_version']);
     }
 
     public function testInstagramConfiguration(): void
@@ -171,7 +171,7 @@ class ConfigurationTest extends TestCase
         $this->assertFalse($processedConfig['providers']['twitter']['enabled']);
         $this->assertFalse($processedConfig['providers']['facebook']['enabled']);
         $this->assertFalse($processedConfig['providers']['threads']['enabled']);
-        $this->assertEquals('v20.0', $processedConfig['providers']['facebook']['graph_version']);
+        $this->assertEquals('v22.0', $processedConfig['providers']['facebook']['graph_version']);
         $this->assertEquals('v1.0', $processedConfig['providers']['threads']['api_version']);
     }
 }

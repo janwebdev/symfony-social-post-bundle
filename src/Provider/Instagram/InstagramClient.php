@@ -21,7 +21,7 @@ readonly class InstagramClient
         private ClientInterface $httpClient,
         private string $instagramAccountId,
         private string $accessToken,
-        private string $graphVersion = 'v20.0',
+        private string $graphVersion = 'v22.0',
     ) {
     }
 

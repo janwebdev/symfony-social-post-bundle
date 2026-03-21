@@ -21,7 +21,7 @@ readonly class FacebookClient
         private ClientInterface $httpClient,
         private string $pageId,
         private string $accessToken,
-        private string $graphVersion = 'v20.0',
+        private string $graphVersion = 'v22.0',
     ) {
     }
 
