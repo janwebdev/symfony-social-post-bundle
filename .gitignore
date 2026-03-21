@@ -4,6 +4,7 @@ docs/superpowers/plans
 vendor
 .idea
 .claude
+.code-review-graph
 composer.lock
 .phpunit.result.cache
 *.cache

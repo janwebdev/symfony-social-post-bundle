@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.2.0] - 2026-03-21
+## [3.1.0] - 2026-03-21
 
 ### Added
 - **Pinterest**: New `PinterestProvider` using Pinterest API v5 (`POST /v5/pins`).
