@@ -14,10 +14,9 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
  */
-final readonly class TwitterClient
+readonly class TwitterClient
 {
     private const API_BASE_URL = 'https://api.twitter.com/2';
-    private const UPLOAD_BASE_URL = 'https://upload.twitter.com/1.1';
 
     public function __construct(
         private ClientInterface $httpClient,
@@ -71,17 +70,12 @@ final readonly class TwitterClient
 
         foreach ($attachments as $attachment) {
             if ($attachment->getType() !== 'image') {
-                continue; // For now, only support images
+                continue;
             }
 
-            try {
-                $mediaId = $this->uploadSingleMedia($attachment);
-                if ($mediaId) {
-                    $mediaIds[] = $mediaId;
-                }
-            } catch (\Throwable $e) {
-                // Log but continue with other attachments
-                continue;
+            $mediaId = $this->uploadSingleMedia($attachment);
+            if ($mediaId !== null) {
+                $mediaIds[] = $mediaId;
             }
         }
 
@@ -90,9 +84,8 @@ final readonly class TwitterClient
 
     private function uploadSingleMedia(AttachmentInterface $attachment): ?string
     {
-        $url = self::UPLOAD_BASE_URL . '/media/upload.json';
-        
-        // Read file content
+        $url = self::API_BASE_URL . '/media/upload';
+
         $filePath = $attachment->getPath();
         if ($attachment->isLocal()) {
             if (!file_exists($filePath)) {
@@ -100,7 +93,6 @@ final readonly class TwitterClient
             }
             $fileContent = file_get_contents($filePath);
         } else {
-            // Download from URL
             $fileContent = file_get_contents($filePath);
         }
 
@@ -108,31 +100,20 @@ final readonly class TwitterClient
             throw new ProviderException("Failed to read file: {$filePath}");
         }
 
-        $boundary = uniqid('', true);
         $headers = $this->getAuthHeaders('POST', $url);
-        $headers['Content-Type'] = "multipart/form-data; boundary={$boundary}";
 
-        $body = $this->buildMultipartBody($boundary, $fileContent, basename($filePath));
-
-        $response = $this->httpClient->post($url, $headers, $body);
+        $response = $this->httpClient->postMultipart($url, $headers, [
+            'media' => $fileContent,
+            'media_category' => 'tweet_image',
+        ]);
 
         if (!$response->isSuccessful()) {
             throw new ProviderException("Failed to upload media: {$response->getBody()}");
         }
 
         $data = $response->toArray();
-        return $data['media_id_string'] ?? null;
-    }
-
-    private function buildMultipartBody(string $boundary, string $fileContent, string $filename): string
-    {
-        $body = "--{$boundary}\r\n";
-        $body .= "Content-Disposition: form-data; name=\"media\"; filename=\"{$filename}\"\r\n";
-        $body .= "Content-Type: application/octet-stream\r\n\r\n";
-        $body .= $fileContent . "\r\n";
-        $body .= "--{$boundary}--\r\n";
-
-        return $body;
+        $mediaId = $data['media_id_string'] ?? null;
+        return is_string($mediaId) ? $mediaId : null;
     }
 
     /**

@@ -13,7 +13,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
  */
-final readonly class DiscordClient
+readonly class DiscordClient
 {
     public function __construct(
         private ClientInterface $httpClient,

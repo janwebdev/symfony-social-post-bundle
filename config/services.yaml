@@ -155,6 +155,23 @@ services:
           enabled: "%social_post.threads.enabled%",
         }
 
+  # Pinterest Provider
+  Janwebdev\SocialPostBundle\Provider\Pinterest\PinterestClient:
+    arguments:
+      $httpClient: '@Janwebdev\SocialPostBundle\Http\ClientInterface'
+      $boardId: "%social_post.pinterest.board_id%"
+      $accessToken: "%social_post.pinterest.access_token%"
+
+  Janwebdev\SocialPostBundle\Provider\Pinterest\PinterestProvider:
+    arguments:
+      $client: '@Janwebdev\SocialPostBundle\Provider\Pinterest\PinterestClient'
+      $logger: "@?logger"
+    tags:
+      - {
+          name: "social_post.provider",
+          enabled: "%social_post.pinterest.enabled%",
+        }
+
   # Publisher
   Janwebdev\SocialPostBundle\Publisher\PublisherInterface:
     class: Janwebdev\SocialPostBundle\Publisher\Publisher

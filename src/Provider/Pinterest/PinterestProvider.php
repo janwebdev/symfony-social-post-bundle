@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Janwebdev\SocialPostBundle\Provider\LinkedIn;
+namespace Janwebdev\SocialPostBundle\Provider\Pinterest;
 
 use Janwebdev\SocialPostBundle\Message\Message;
 use Janwebdev\SocialPostBundle\Provider\ProviderInterface;
@@ -11,18 +11,22 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * LinkedIn provider using Community Management API (/rest/posts).
+ * Pinterest provider using API v5.
  *
- * @since 3.0.0
+ * Publishes link pins (text + URL) and image pins (URL-based images only).
+ * Local image files must be served via a public URL — Pinterest requires
+ * publicly accessible image URLs; local paths are not supported.
+ *
+ * @since 3.2.0
  * @license https://opensource.org/licenses/MIT
- * @see https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api
+ * @see https://developers.pinterest.com/docs/api/v5/#tag/pins/operation/pins/create
  */
-final readonly class LinkedInProvider implements ProviderInterface
+final readonly class PinterestProvider implements ProviderInterface
 {
-    public const NAME = 'linkedin';
+    public const NAME = 'pinterest';
 
     public function __construct(
-        private LinkedInClient $client,
+        private PinterestClient $client,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -40,33 +44,31 @@ final readonly class LinkedInProvider implements ProviderInterface
     public function publish(Message $message): PublishResult
     {
         try {
-            $shareData = $this->prepareShareData($message);
+            $pinData = $this->preparePinData($message);
 
-            $this->logger->debug('Posting to LinkedIn', ['data' => $shareData]);
+            $this->logger->debug('Creating Pinterest pin', ['data' => $pinData]);
 
-            $response = $this->client->createPost($shareData);
+            $response = $this->client->createPin($pinData);
 
             if (isset($response['id']) && is_string($response['id'])) {
-                $shareId = $response['id'];
-                // Extract URN from response
-                $shareUrn = $response['id'];
-                $postUrl = "https://www.linkedin.com/feed/update/{$shareUrn}";
+                $pinId = $response['id'];
+                $pinUrl = "https://www.pinterest.com/pin/{$pinId}/";
 
                 return PublishResult::success(
                     providerName: self::NAME,
-                    postId: $shareId,
-                    postUrl: $postUrl,
+                    postId: $pinId,
+                    postUrl: $pinUrl,
                     metadata: $response,
                 );
             }
 
             return PublishResult::failure(
                 providerName: self::NAME,
-                errorMessage: 'Post created but no ID returned',
+                errorMessage: 'Pin created but no ID returned',
                 metadata: $response,
             );
         } catch (\Throwable $e) {
-            $this->logger->error('Failed to publish to LinkedIn', [
+            $this->logger->error('Failed to publish to Pinterest', [
                 'exception' => $e->getMessage(),
             ]);
 
@@ -86,37 +88,29 @@ final readonly class LinkedInProvider implements ProviderInterface
     /**
      * @return array<string, mixed>
      */
-    private function prepareShareData(Message $message): array
+    private function preparePinData(Message $message): array
     {
         $data = [
-            'text' => ['text' => $message->getText()],
+            'title' => mb_substr($message->getText(), 0, 100),
+            'description' => $message->getText(),
         ];
 
-        // Add content/article if link is provided
-        if ($message->getLink()) {
-            $data['content'] = [
-                'article' => [
-                    'source' => $message->getLink(),
-                    'title' => mb_substr($message->getText(), 0, 100),
-                ],
-            ];
+        if ($message->getLink() !== null) {
+            $data['link'] = $message->getLink();
         }
 
-        // Handle image attachments
+        // Image pin: Pinterest requires a publicly accessible image URL
         if ($message->hasAttachments()) {
             $images = array_filter(
                 $message->getAttachments(),
-                fn($attachment) => $attachment->getType() === 'image'
+                static fn ($a) => $a->getType() === 'image',
             );
 
             if (!empty($images)) {
                 $firstImage = reset($images);
-                if (!isset($data['content'])) {
-                    $data['content'] = [];
-                }
-                $data['content']['media'] = [
-                    'title' => mb_substr($message->getText(), 0, 100),
-                    'id' => $firstImage->getPath(), // Would need to upload first
+                $data['media_source'] = [
+                    'source_type' => 'image_url',
+                    'url' => $firstImage->getPath(),
                 ];
             }
         }

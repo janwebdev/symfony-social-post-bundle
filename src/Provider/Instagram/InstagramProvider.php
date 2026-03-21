@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Janwebdev\SocialPostBundle\Provider\Instagram;
 
 use Janwebdev\SocialPostBundle\Message\Message;
+use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
 use Janwebdev\SocialPostBundle\Provider\ProviderInterface;
 use Janwebdev\SocialPostBundle\Provider\Result\PublishResult;
 use Psr\Log\LoggerInterface;
@@ -24,6 +25,7 @@ final readonly class InstagramProvider implements ProviderInterface
     public function __construct(
         private InstagramClient $client,
         private LoggerInterface $logger = new NullLogger(),
+        private int $pollIntervalSeconds = 2,
     ) {
     }
 
@@ -43,7 +45,7 @@ final readonly class InstagramProvider implements ProviderInterface
             $this->logger->debug('Publishing to Instagram');
 
             // Instagram requires a two-step process: create container, then publish
-            
+
             // Step 1: Create media container
             $containerData = $this->prepareContainerData($message);
             $container = $this->client->createMediaContainer($containerData);
@@ -59,8 +61,8 @@ final readonly class InstagramProvider implements ProviderInterface
             $containerId = $container['id'];
             $this->logger->debug('Media container created', ['container_id' => $containerId]);
 
-            // Step 2: Wait a bit for media to be processed (Instagram requirement)
-            sleep(1);
+            // Step 2: Wait for media to be processed (poll status instead of blind sleep)
+            $this->waitForContainerReady($containerId);
 
             // Step 3: Publish the container
             $response = $this->client->publishMediaContainer($containerId);
@@ -98,6 +100,39 @@ final readonly class InstagramProvider implements ProviderInterface
     public function isConfigured(): bool
     {
         return $this->client->isConfigured();
+    }
+
+    /**
+     * Poll container status until FINISHED, or throw on failure/timeout.
+     *
+     * @throws ProviderException when processing fails or times out
+     */
+    private function waitForContainerReady(string $containerId): void
+    {
+        $maxAttempts = 10;
+
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            $status = $this->client->getContainerStatus($containerId);
+            $statusCode = $status['status_code'] ?? 'IN_PROGRESS';
+
+            if ($statusCode === 'FINISHED') {
+                return;
+            }
+
+            if ($statusCode === 'ERROR' || $statusCode === 'EXPIRED') {
+                throw new ProviderException(
+                    sprintf('Instagram container processing failed with status: %s', $statusCode)
+                );
+            }
+
+            if ($this->pollIntervalSeconds > 0) {
+                sleep($this->pollIntervalSeconds);
+            }
+        }
+
+        throw new ProviderException(
+            sprintf('Instagram container processing timed out after %d attempts', $maxAttempts)
+        );
     }
 
     /**

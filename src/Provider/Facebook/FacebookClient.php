@@ -13,7 +13,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
  */
-final readonly class FacebookClient
+readonly class FacebookClient
 {
     private const API_BASE_URL = 'https://graph.facebook.com';
 
@@ -21,7 +21,7 @@ final readonly class FacebookClient
         private ClientInterface $httpClient,
         private string $pageId,
         private string $accessToken,
-        private string $graphVersion = 'v20.0',
+        private string $graphVersion = 'v22.0',
     ) {
     }
 

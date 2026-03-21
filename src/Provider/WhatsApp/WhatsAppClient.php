@@ -15,7 +15,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
  */
-final readonly class WhatsAppClient
+readonly class WhatsAppClient
 {
     private const API_BASE_URL = 'https://graph.facebook.com';
 
@@ -23,7 +23,7 @@ final readonly class WhatsAppClient
         private ClientInterface $httpClient,
         private string $phoneNumberId,
         private string $accessToken,
-        private string $apiVersion = 'v20.0',
+        private string $apiVersion = 'v22.0',
     ) {
     }
 

@@ -8,14 +8,15 @@ use Janwebdev\SocialPostBundle\Http\ClientInterface;
 use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
 
 /**
- * LinkedIn API v2 client.
+ * LinkedIn Community Management API client.
  *
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
+ * @see https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api
  */
-final readonly class LinkedInClient
+readonly class LinkedInClient
 {
-    private const API_BASE_URL = 'https://api.linkedin.com/v2';
+    private const API_BASE_URL = 'https://api.linkedin.com/rest';
 
     public function __construct(
         private ClientInterface $httpClient,
@@ -30,55 +31,75 @@ final readonly class LinkedInClient
     }
 
     /**
-     * Create a share/post on LinkedIn.
+     * Create a post using LinkedIn Community Management API.
      *
      * @param array<string, mixed> $data
      * @return array<string, mixed>
      */
-    public function createShare(array $data): array
+    public function createPost(array $data): array
     {
-        $url = self::API_BASE_URL . '/ugcPosts';
+        $url = self::API_BASE_URL . '/posts';
 
-        // Build complete share payload
+        $textData = isset($data['text']) && is_array($data['text']) ? $data['text'] : [];
+        $commentary = isset($textData['text']) && is_string($textData['text']) ? $textData['text'] : '';
+
         $payload = [
             'author' => 'urn:li:organization:' . $this->organizationId,
+            'commentary' => $commentary,
+            'visibility' => 'PUBLIC',
+            'distribution' => [
+                'feedDistribution' => 'MAIN_FEED',
+                'targetEntities' => [],
+                'thirdPartyDistributionChannels' => [],
+            ],
             'lifecycleState' => 'PUBLISHED',
-            'specificContent' => [
-                'com.linkedin.ugc.ShareContent' => [
-                    'shareCommentary' => $data['text'],
-                    'shareMediaCategory' => 'NONE',
-                ],
-            ],
-            'visibility' => [
-                'com.linkedin.ugc.MemberNetworkVisibility' => 'PUBLIC',
-            ],
+            'isReshareDisabledByAuthor' => false,
         ];
 
-        // Add media if present
-        if (isset($data['content'])) {
-            if (isset($data['content']['article'])) {
-                $payload['specificContent']['com.linkedin.ugc.ShareContent']['shareMediaCategory'] = 'ARTICLE';
-                $payload['specificContent']['com.linkedin.ugc.ShareContent']['media'] = [[
-                    'status' => 'READY',
-                    'originalUrl' => $data['content']['article']['source'],
-                ]];
-            }
+        // Article link content
+        if (isset($data['content']) && is_array($data['content'])
+            && isset($data['content']['article']) && is_array($data['content']['article'])
+        ) {
+            $article = $data['content']['article'];
+            $source = isset($article['source']) && is_string($article['source']) ? $article['source'] : '';
+            $title = isset($article['title']) && is_string($article['title']) ? $article['title'] : '';
+            $payload['content'] = [
+                'article' => [
+                    'source' => $source,
+                    'title' => $title,
+                    'description' => '',
+                ],
+            ];
         }
 
         $headers = [
             'Authorization' => 'Bearer ' . $this->accessToken,
             'Content-Type' => 'application/json',
             'X-Restli-Protocol-Version' => '2.0.0',
+            'LinkedIn-Version' => '202503',
         ];
 
         $response = $this->httpClient->post($url, $headers, $payload);
 
         if (!$response->isSuccessful()) {
             $error = $response->toArray();
-            $errorMessage = $error['message'] ?? 'Unknown error';
+            $errorMessage = isset($error['message']) && is_string($error['message']) ? $error['message'] : 'Unknown error';
             throw new ProviderException("LinkedIn API error: {$errorMessage}");
         }
 
-        return $response->toArray();
+        // New API returns post URN in x-restli-id header; body is empty
+        $responseHeaders = $response->getHeaders();
+        $restliHeader = isset($responseHeaders['x-restli-id']) && is_array($responseHeaders['x-restli-id'])
+            ? $responseHeaders['x-restli-id']
+            : [];
+        $linkedinHeader = isset($responseHeaders['x-linkedin-id']) && is_array($responseHeaders['x-linkedin-id'])
+            ? $responseHeaders['x-linkedin-id']
+            : [];
+
+        $postId = (isset($restliHeader[0]) && is_string($restliHeader[0]))
+            ? $restliHeader[0]
+            : ((isset($linkedinHeader[0]) && is_string($linkedinHeader[0])) ? $linkedinHeader[0] : null);
+
+        return ['id' => $postId];
     }
 }

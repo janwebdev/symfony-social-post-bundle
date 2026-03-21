@@ -14,7 +14,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  * @license https://opensource.org/licenses/MIT
  * @see https://developers.facebook.com/docs/threads
  */
-final readonly class ThreadsClient
+readonly class ThreadsClient
 {
     private const API_BASE_URL = 'https://graph.threads.net';
 
