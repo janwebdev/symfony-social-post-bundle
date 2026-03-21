@@ -9,7 +9,7 @@ Modern Symfony bundle for posting to multiple social networks (Twitter, Facebook
 ## ✨ Features
 
 - 🚀 **Modern Stack**: PHP 8.4+ & Symfony 7.4+
-- 🌐 **Multiple Networks**: Twitter (X), Facebook, LinkedIn, Telegram, Instagram, Discord, WhatsApp, Threads
+- 🌐 **Multiple Networks**: Twitter (X), Facebook, LinkedIn, Telegram, Instagram, Discord, Threads, Pinterest (+ WhatsApp ⚠️ deprecated)
 - ⚡ **Async Support**: Built-in Symfony Messenger integration
 - 🎯 **Type Safe**: Full PHP 8.4 type coverage with readonly properties
 - 📸 **Media Support**: Image attachments for all providers
@@ -43,7 +43,7 @@ social_post:
       enabled: true
       page_id: "%env(FACEBOOK_PAGE_ID)%"
       access_token: "%env(FACEBOOK_ACCESS_TOKEN)%"
-      graph_version: "v20.0"
+      graph_version: "v22.0"
 
     linkedin:
       enabled: true
@@ -59,7 +59,7 @@ social_post:
       enabled: true
       account_id: "%env(INSTAGRAM_ACCOUNT_ID)%"
       access_token: "%env(INSTAGRAM_ACCESS_TOKEN)%"
-      graph_version: "v20.0"
+      graph_version: "v22.0"
 
     discord:
       enabled: true
@@ -69,13 +69,18 @@ social_post:
       enabled: true
       phone_number_id: "%env(WHATSAPP_PHONE_NUMBER_ID)%"
       access_token: "%env(WHATSAPP_ACCESS_TOKEN)%"
-      api_version: "v20.0"
+      api_version: "v22.0"
 
     threads:
       enabled: true
       user_id: "%env(THREADS_USER_ID)%"
       access_token: "%env(THREADS_ACCESS_TOKEN)%"
       api_version: "v1.0"
+
+    pinterest:
+      enabled: true
+      board_id: "%env(PINTEREST_BOARD_ID)%"
+      access_token: "%env(PINTEREST_ACCESS_TOKEN)%"
 ```
 
 ### Environment Variables
@@ -115,6 +120,10 @@ WHATSAPP_ACCESS_TOKEN=your_access_token
 # Threads API
 THREADS_USER_ID=your_threads_user_id
 THREADS_ACCESS_TOKEN=your_access_token
+
+# Pinterest API v5
+PINTEREST_BOARD_ID=your_board_id
+PINTEREST_ACCESS_TOKEN=your_access_token
 ```
 
 > ⚠️ **Note**: WhatsApp Channel integration is in BETA and may be unstable. The API is subject to change.
@@ -297,17 +306,17 @@ foreach ($results as $network => $result) {
 
 ### Facebook
 
-- **API Version**: Graph API v20.0+
+- **API Version**: Graph API v22.0+
 - **Authentication**: Page Access Token
 - **Features**: Text posts, link previews, images
 - **Note**: Use non-expiring page access tokens
 
 ### LinkedIn
 
-- **API Version**: v2
+- **API Version**: Community Management API (/rest/posts)
 - **Authentication**: OAuth 2.0 Bearer token
 - **Features**: Text posts, article sharing
-- **Note**: Requires organization access
+- **Note**: Requires organization access. Uses the Community Management API (`POST /rest/posts`), replacing the legacy `/v2/ugcPosts` endpoint.
 
 ### Telegram
 
@@ -318,7 +327,7 @@ foreach ($results as $network => $result) {
 
 ### Instagram
 
-- **API Version**: Graph API v20.0+
+- **API Version**: Graph API v22.0+
 - **Authentication**: Access Token (Business Account)
 - **Features**: Photo posts with captions, container-based publishing
 - **Character Limit**: 2200 characters for captions
@@ -331,9 +340,11 @@ foreach ($results as $network => $result) {
 - **Features**: Text messages, rich embeds, image attachments
 - **Note**: Very simple setup, no bot required
 
-### WhatsApp (⚠️ BETA/UNSTABLE)
+### WhatsApp (⚠️ DEPRECATED)
 
-- **API Version**: Graph API v20.0+ (Channels API)
+> ⚠️ **DEPRECATED**: `WhatsAppProvider` is deprecated and will be removed in v4.0. WhatsApp Business Cloud API does not support posting to public Channels; it only sends template messages to opted-in users.
+
+- **API Version**: Graph API v22.0+ (Channels API)
 - **Authentication**: Phone Number ID + Access Token
 - **Features**: Text messages, image messages
 - **Note**: API is in beta, requires special access, may change without notice
@@ -345,6 +356,13 @@ foreach ($results as $network => $result) {
 - **Features**: Text posts, image posts, container-based publishing
 - **Character Limit**: 500 characters
 - **Note**: Requires Instagram account connected to Threads, similar workflow to Instagram API
+
+### Pinterest
+
+- **API Version**: API v5
+- **Authentication**: OAuth 2.0 Bearer token
+- **Features**: Link pins, image URL pins
+- **Note**: Requires Pinterest Business account. Image attachments must be publicly accessible URLs — local file paths are not supported.
 
 ## 🧪 Testing
 
@@ -441,6 +459,15 @@ composer fix-code-style
 
 [How to get Threads API access](https://developers.facebook.com/docs/threads/get-started)
 
+### Pinterest API v5
+
+1. Go to [Pinterest Developers](https://developers.pinterest.com/)
+2. Create an App
+3. Request "Read/Write" access for Pins
+4. Generate an access token
+5. Get your Board ID from a board URL: `pinterest.com/{username}/{board-name}/` → go to board settings to find the numeric ID
+6. Permissions needed: `pins:read`, `pins:write`, `boards:read`
+
 ## 🔄 Migration from v2.x
 
 The new v3.0 uses a completely different architecture. Key changes:
@@ -498,22 +525,4 @@ This bundle is licensed under the MIT License. See the [LICENSE](LICENSE) file f
 
 ## 📝 Version History
 
-### 3.0.0 (2026-01-16)
-
-- 🎉 Complete rewrite for PHP 8.4 and Symfony 7.4
-- ✨ No external SDK dependencies (all built-in)
-- 🚀 Twitter API v2 support
-- 📊 Facebook Graph API v20+ support
-- 🔗 LinkedIn API v2 support
-- 💬 Telegram Bot API support
-- 📸 Instagram Graph API support
-- 🎮 Discord Webhooks support
-- 📱 WhatsApp Channel API support (BETA)
-- ⚡ Async publishing via Symfony Messenger
-- 🎯 Type-safe with readonly properties
-- 📦 MessageBuilder with fluent interface
-- 📈 Detailed result objects
-- 🎪 Event system for extensibility
-- 🛡️ Comprehensive error handling
-- 🧵 Threads API support
-- 🌐 8 social networks total
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
