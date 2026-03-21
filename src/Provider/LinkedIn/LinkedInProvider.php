@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * LinkedIn provider using API v2.
+ * LinkedIn provider using Community Management API (/rest/posts).
  *
  * @since 3.0.0
  * @license https://opensource.org/licenses/MIT
@@ -62,7 +62,7 @@ final readonly class LinkedInProvider implements ProviderInterface
 
             return PublishResult::failure(
                 providerName: self::NAME,
-                errorMessage: 'Share created but no ID returned',
+                errorMessage: 'Post created but no ID returned',
                 metadata: $response,
             );
         } catch (\Throwable $e) {
@@ -90,11 +90,6 @@ final readonly class LinkedInProvider implements ProviderInterface
     {
         $data = [
             'text' => ['text' => $message->getText()],
-            'distribution' => [
-                'linkedInDistributionTarget' => [
-                    'visibleToGuest' => true,
-                ],
-            ],
         ];
 
         // Add content/article if link is provided
