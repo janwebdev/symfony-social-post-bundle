@@ -70,17 +70,12 @@ readonly class TwitterClient
 
         foreach ($attachments as $attachment) {
             if ($attachment->getType() !== 'image') {
-                continue; // For now, only support images
+                continue;
             }
 
-            try {
-                $mediaId = $this->uploadSingleMedia($attachment);
-                if ($mediaId) {
-                    $mediaIds[] = $mediaId;
-                }
-            } catch (\Throwable $e) {
-                // Log but continue with other attachments
-                continue;
+            $mediaId = $this->uploadSingleMedia($attachment);
+            if ($mediaId !== null) {
+                $mediaIds[] = $mediaId;
             }
         }
 

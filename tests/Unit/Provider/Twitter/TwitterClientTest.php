@@ -86,4 +86,17 @@ class TwitterClientTest extends TestCase
         $result = $this->client->uploadMedia([$attachment]);
         $this->assertEquals([], $result);
     }
+
+    public function testUploadMediaPropagatesExceptionOnFailure(): void
+    {
+        $attachment = $this->createMock(\Janwebdev\SocialPostBundle\Message\Attachment\AttachmentInterface::class);
+        $attachment->method('getType')->willReturn('image');
+        $attachment->method('isLocal')->willReturn(true);
+        $attachment->method('getPath')->willReturn('/nonexistent/path/image.jpg');
+
+        $this->expectException(\Janwebdev\SocialPostBundle\Provider\Exception\ProviderException::class);
+        $this->expectExceptionMessageMatches('/File not found/');
+
+        $this->client->uploadMedia([$attachment]);
+    }
 }
