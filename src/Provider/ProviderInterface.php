@@ -18,7 +18,7 @@ interface ProviderInterface
     /**
      * Get the provider name (twitter, facebook, linkedin, telegram).
      */
-    public function getName(): string;
+    public static function getName(): string;
 
     /**
      * Check if this provider can publish the given message.

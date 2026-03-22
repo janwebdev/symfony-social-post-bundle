@@ -27,7 +27,7 @@ final readonly class TelegramProvider implements ProviderInterface
     ) {
     }
 
-    public function getName(): string
+    public static function getName(): string
     {
         return self::NAME;
     }
