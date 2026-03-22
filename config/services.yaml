@@ -177,11 +177,9 @@ services:
     class: Janwebdev\SocialPostBundle\Publisher\Publisher
     public: true
     arguments:
-      $providers:
-        !tagged_iterator {
-          tag: "social_post.provider",
-          default_index_method: "getName",
-        }
+      $providers: !tagged_iterator
+        tag: "social_post.provider",
+        default_index_method: "getName"
       $eventDispatcher: "@event_dispatcher"
       $messageBus: "@messenger.default_bus"
       $logger: "@?logger"
@@ -189,11 +187,9 @@ services:
   Janwebdev\SocialPostBundle\Publisher\Publisher:
     public: true
     arguments:
-      $providers:
-        !tagged_iterator {
-          tag: "social_post.provider",
-          default_index_method: "getName",
-        }
+      $providers: !tagged_iterator
+        tag: "social_post.provider",
+        default_index_method: "getName",
       $eventDispatcher: "@event_dispatcher"
       $messageBus: "@messenger.default_bus"
       $logger: "@?logger"

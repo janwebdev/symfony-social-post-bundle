@@ -1,6 +1,8 @@
 bin
+docs/saas
 docs/tests/coverage
 docs/superpowers/plans
+docs/superpowers/specs
 vendor
 .idea
 .claude
