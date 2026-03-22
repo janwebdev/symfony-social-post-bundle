@@ -178,7 +178,7 @@ services:
     public: true
     arguments:
       $providers: !tagged_iterator
-        tag: "social_post.provider",
+        tag: "social_post.provider"
         default_index_method: "getName"
       $eventDispatcher: "@event_dispatcher"
       $messageBus: "@messenger.default_bus"
@@ -188,8 +188,8 @@ services:
     public: true
     arguments:
       $providers: !tagged_iterator
-        tag: "social_post.provider",
-        default_index_method: "getName",
+        tag: "social_post.provider"
+        default_index_method: "getName"
       $eventDispatcher: "@event_dispatcher"
       $messageBus: "@messenger.default_bus"
       $logger: "@?logger"
