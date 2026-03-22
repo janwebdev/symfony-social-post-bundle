@@ -21,6 +21,7 @@ final readonly class Message
     public function __construct(
         private string $text,
         private ?string $link = null,
+        private ?string $imageUrl = null,
         private array $networks = [],
         private array $attachments = [],
         private array $metadata = [],
@@ -35,6 +36,11 @@ final readonly class Message
     public function getLink(): ?string
     {
         return $this->link;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
     }
 
     /**

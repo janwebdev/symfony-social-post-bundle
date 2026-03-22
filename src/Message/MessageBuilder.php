@@ -17,6 +17,7 @@ final class MessageBuilder
 {
     private string $text = '';
     private ?string $link = null;
+    private ?string $imageUrl = null;
     /** @var array<string> */
     private array $networks = [];
     /** @var array<AttachmentInterface> */
@@ -41,6 +42,12 @@ final class MessageBuilder
     public function setLink(?string $link): self
     {
         $this->link = $link;
+        return $this;
+    }
+
+    public function setImageUrl(?string $imageUrl): self
+    {
+        $this->imageUrl = $imageUrl;
         return $this;
     }
 
@@ -97,6 +104,7 @@ final class MessageBuilder
         return new Message(
             text: $this->text,
             link: $this->link,
+            imageUrl: $this->imageUrl,
             networks: $this->networks,
             attachments: $this->attachments,
             metadata: $this->metadata,
