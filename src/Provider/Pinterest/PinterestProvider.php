@@ -31,7 +31,7 @@ final readonly class PinterestProvider implements ProviderInterface
     ) {
     }
 
-    public function getName(): string
+    public static function getName(): string
     {
         return self::NAME;
     }
