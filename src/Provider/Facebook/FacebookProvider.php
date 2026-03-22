@@ -94,6 +94,11 @@ final readonly class FacebookProvider implements ProviderInterface
             $data['link'] = $message->getLink();
         }
 
+        // Add image URL if provided
+        if ($message->getImageUrl()) {
+            $data['picture'] = $message->getImageUrl();
+        }
+
         // Handle image attachments
         if ($message->hasAttachments()) {
             $images = array_filter(
@@ -108,7 +113,7 @@ final readonly class FacebookProvider implements ProviderInterface
                     $data['url'] = $firstImage->getPath();
                     if ($firstImage->getAltText()) {
                         $data['caption'] = $data['message'];
-                        $data['message'] = $firstImage->getAltText();
+                        $data['description'] = $firstImage->getAltText();
                     }
                 }
                 // For multiple images, would need different approach
