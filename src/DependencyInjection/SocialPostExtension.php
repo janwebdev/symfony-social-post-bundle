@@ -25,8 +25,8 @@ class SocialPostExtension extends Extension
      */
     private const PROVIDER_DEFAULTS = [
         'twitter' => [
-            'api_key' => '',
-            'api_secret' => '',
+            'consumer_key' => '',
+            'consumer_secret' => '',
             'access_token' => '',
             'access_token_secret' => '',
         ],

@@ -34,8 +34,8 @@ social_post:
   providers:
     twitter:
       enabled: true
-      api_key: "%env(TWITTER_API_KEY)%"
-      api_secret: "%env(TWITTER_API_SECRET)%"
+      consumer_key: "%env(TWITTER_CONSUMER_KEY)%"
+      consumer_secret: "%env(TWITTER_CONSUMER_SECRET)%"
       access_token: "%env(TWITTER_ACCESS_TOKEN)%"
       access_token_secret: "%env(TWITTER_ACCESS_TOKEN_SECRET)%"
 
@@ -89,8 +89,8 @@ Add to your `.env`:
 
 ```env
 # Twitter (X) API v2
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
+TWITTER_CONSUMER_KEY=your_consumer_key
+TWITTER_CONSUMER_SECRET=your_consumer_secret
 TWITTER_ACCESS_TOKEN=your_access_token
 TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
 

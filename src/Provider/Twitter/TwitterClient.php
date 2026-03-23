@@ -11,7 +11,14 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
 /**
  * Twitter API v2 client with OAuth 1.0a authentication.
  *
- * @since 3.0.0
+ * OAuth 1.0a requires four credentials from the Twitter Developer Portal
+ * (Projects & Apps → Your App → "Keys and Tokens"):
+ *   - Consumer Keys section: API Key ($consumerKey) + API Key Secret ($consumerSecret)
+ *   - Authentication Tokens section: Access Token ($accessToken) + Access Token Secret ($accessTokenSecret)
+ *
+ * Note: OAuth 2.0 Client ID / Client Secret are separate and NOT used here.
+ *
+ * @since 3.2.1
  * @license https://opensource.org/licenses/MIT
  */
 readonly class TwitterClient
@@ -20,8 +27,8 @@ readonly class TwitterClient
 
     public function __construct(
         private ClientInterface $httpClient,
-        private string $apiKey,
-        private string $apiSecret,
+        private string $consumerKey,
+        private string $consumerSecret,
         private string $accessToken,
         private string $accessTokenSecret,
     ) {
@@ -29,8 +36,8 @@ readonly class TwitterClient
 
     public function isConfigured(): bool
     {
-        return !empty($this->apiKey)
-            && !empty($this->apiSecret)
+        return !empty($this->consumerKey)
+            && !empty($this->consumerSecret)
             && !empty($this->accessToken)
             && !empty($this->accessTokenSecret);
     }
@@ -91,21 +98,24 @@ readonly class TwitterClient
             if (!file_exists($filePath)) {
                 throw new ProviderException("File not found: {$filePath}");
             }
-            $fileContent = file_get_contents($filePath);
-        } else {
-            $fileContent = file_get_contents($filePath);
         }
 
-        if ($fileContent === false) {
-            throw new ProviderException("Failed to read file: {$filePath}");
+        // Must pass a resource (not string) so Symfony HttpClient uses multipart/form-data
+        $fileHandle = fopen($filePath, 'rb');
+        if ($fileHandle === false) {
+            throw new ProviderException("Failed to open file: {$filePath}");
         }
 
         $headers = $this->getAuthHeaders('POST', $url);
 
-        $response = $this->httpClient->postMultipart($url, $headers, [
-            'media' => $fileContent,
-            'media_category' => 'tweet_image',
-        ]);
+        try {
+            $response = $this->httpClient->postMultipart($url, $headers, [
+                'media' => $fileHandle,
+                'media_category' => 'tweet_image',
+            ]);
+        } finally {
+            fclose($fileHandle);
+        }
 
         if (!$response->isSuccessful()) {
             throw new ProviderException("Failed to upload media: {$response->getBody()}");
@@ -125,7 +135,7 @@ readonly class TwitterClient
     private function getAuthHeaders(string $method, string $url, array $data = []): array
     {
         $oauthParams = [
-            'oauth_consumer_key' => $this->apiKey,
+            'oauth_consumer_key' => $this->consumerKey,
             'oauth_nonce' => bin2hex(random_bytes(16)),
             'oauth_signature_method' => 'HMAC-SHA1',
             'oauth_timestamp' => (string) time(),
@@ -133,15 +143,16 @@ readonly class TwitterClient
             'oauth_version' => '1.0',
         ];
 
-        // Create signature base string
+        // Create signature base string.
+        // JSON POST body is NOT included per OAuth 1.0a spec (only form-urlencoded bodies are).
         $params = array_merge($oauthParams, $method === 'GET' ? $data : []);
         ksort($params);
-        
+
         $paramString = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
         $baseString = strtoupper($method) . '&' . rawurlencode($url) . '&' . rawurlencode($paramString);
 
-        // Generate signature
-        $signingKey = rawurlencode($this->apiSecret) . '&' . rawurlencode($this->accessTokenSecret);
+        // Signing key = percent-encode(consumerSecret) + '&' + percent-encode(accessTokenSecret)
+        $signingKey = rawurlencode($this->consumerSecret) . '&' . rawurlencode($this->accessTokenSecret);
         $signature = base64_encode(hash_hmac('sha1', $baseString, $signingKey, true));
         
         $oauthParams['oauth_signature'] = $signature;
