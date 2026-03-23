@@ -28,8 +28,8 @@ class ConfigurationTest extends TestCase
             'providers' => [
                 'twitter' => [
                     'enabled' => true,
-                    'api_key' => 'test_key',
-                    'api_secret' => 'test_secret',
+                    'consumer_key' => 'test_key',
+                    'consumer_secret' => 'test_secret',
                     'access_token' => 'test_token',
                     'access_token_secret' => 'test_token_secret',
                 ],
@@ -39,7 +39,7 @@ class ConfigurationTest extends TestCase
         $processedConfig = $this->processor->processConfiguration($this->configuration, [$config]);
 
         $this->assertTrue($processedConfig['providers']['twitter']['enabled']);
-        $this->assertEquals('test_key', $processedConfig['providers']['twitter']['api_key']);
+        $this->assertEquals('test_key', $processedConfig['providers']['twitter']['consumer_key']);
     }
 
     public function testFacebookConfiguration(): void
@@ -119,7 +119,7 @@ class ConfigurationTest extends TestCase
     {
         $config = [
             'providers' => [
-                'twitter' => ['enabled' => true, 'api_key' => 'key1', 'api_secret' => 's1', 'access_token' => 't1', 'access_token_secret' => 'ts1'],
+                'twitter' => ['enabled' => true, 'consumer_key' => 'key1', 'consumer_secret' => 's1', 'access_token' => 't1', 'access_token_secret' => 'ts1'],
                 'facebook' => ['enabled' => true, 'page_id' => 'p1', 'access_token' => 't1'],
                 'linkedin' => ['enabled' => true, 'organization_id' => 'org1', 'access_token' => 't1'],
                 'telegram' => ['enabled' => true, 'bot_token' => 'bot1', 'channel_id' => 'ch1'],

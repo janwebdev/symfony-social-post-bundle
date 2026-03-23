@@ -18,8 +18,8 @@ services:
   Janwebdev\SocialPostBundle\Provider\Twitter\TwitterClient:
     arguments:
       $httpClient: '@Janwebdev\SocialPostBundle\Http\ClientInterface'
-      $apiKey: "%social_post.twitter.api_key%"
-      $apiSecret: "%social_post.twitter.api_secret%"
+      $consumerKey: "%social_post.twitter.consumer_key%"
+      $consumerSecret: "%social_post.twitter.consumer_secret%"
       $accessToken: "%social_post.twitter.access_token%"
       $accessTokenSecret: "%social_post.twitter.access_token_secret%"
 
