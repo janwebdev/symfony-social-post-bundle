@@ -122,7 +122,7 @@ readonly class TwitterClient
         }
 
         $data = $response->toArray();
-        $mediaId = $data['media_id_string'] ?? null;
+        $mediaId = $data['data']['id'] ?? null;
         return is_string($mediaId) ? $mediaId : null;
     }
 
