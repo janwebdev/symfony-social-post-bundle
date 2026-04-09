@@ -172,6 +172,23 @@ services:
           enabled: "%social_post.pinterest.enabled%",
         }
 
+  # HackerNews Provider
+  Janwebdev\SocialPostBundle\Provider\HackerNews\HackerNewsClient:
+    arguments:
+      $httpClient: "@http_client"
+      $username: "%social_post.hackernews.username%"
+      $password: "%social_post.hackernews.password%"
+
+  Janwebdev\SocialPostBundle\Provider\HackerNews\HackerNewsProvider:
+    arguments:
+      $client: '@Janwebdev\SocialPostBundle\Provider\HackerNews\HackerNewsClient'
+      $logger: "@?logger"
+    tags:
+      - {
+          name: "social_post.provider",
+          enabled: "%social_post.hackernews.enabled%",
+        }
+
   # Publisher
   Janwebdev\SocialPostBundle\Publisher\PublisherInterface:
     class: Janwebdev\SocialPostBundle\Publisher\Publisher
