@@ -35,4 +35,11 @@ interface ClientInterface
      * @param array<string, mixed> $fields
      */
     public function postMultipart(string $url, array $headers = [], array $fields = []): Response;
+
+    /**
+     * Make a PUT request with a raw binary body.
+     *
+     * @param array<string, string> $headers
+     */
+    public function put(string $url, array $headers, string $body): Response;
 }
