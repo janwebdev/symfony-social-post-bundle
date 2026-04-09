@@ -57,8 +57,21 @@ readonly class LinkedInClient
             'isReshareDisabledByAuthor' => false,
         ];
 
-        // Article link content
+        // Image content
         if (isset($data['content']) && is_array($data['content'])
+            && isset($data['content']['media']) && is_array($data['content']['media'])
+        ) {
+            $media = $data['content']['media'];
+            $mediaId = isset($media['id']) && is_string($media['id']) ? $media['id'] : '';
+            $altText = isset($media['altText']) && is_string($media['altText']) ? $media['altText'] : '';
+            $payload['content'] = [
+                'media' => [
+                    'id' => $mediaId,
+                    'altText' => $altText,
+                ],
+            ];
+        // Article link content
+        } elseif (isset($data['content']) && is_array($data['content'])
             && isset($data['content']['article']) && is_array($data['content']['article'])
         ) {
             $article = $data['content']['article'];
