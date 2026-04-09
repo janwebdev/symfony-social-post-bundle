@@ -65,6 +65,10 @@ class SocialPostExtension extends Extension
             'board_id' => '',
             'access_token' => '',
         ],
+        'hackernews' => [
+            'username' => '',
+            'password' => '',
+        ],
     ];
 
     public function load(array $configs, ContainerBuilder $container): void

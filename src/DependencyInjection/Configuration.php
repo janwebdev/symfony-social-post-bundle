@@ -92,6 +92,13 @@ class Configuration implements ConfigurationInterface
                                 ->scalarNode('access_token')->defaultValue('')->end()
                             ->end()
                         ->end()
+                        ->arrayNode('hackernews')
+                            ->canBeEnabled()
+                            ->children()
+                                ->scalarNode('username')->defaultValue('')->end()
+                                ->scalarNode('password')->defaultValue('')->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end();
