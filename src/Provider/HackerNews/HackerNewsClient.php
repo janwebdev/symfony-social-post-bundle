@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 readonly class HackerNewsClient
 {
     private const BASE_URL = 'https://news.ycombinator.com';
-    private const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36';
 
     public function __construct(
         private HttpClientInterface $httpClient,
@@ -37,11 +37,11 @@ readonly class HackerNewsClient
     {
         $cookies = $this->login();
         sleep($this->requestDelay);
-
+        $logoutToken = $this->logoutToken($cookies);
+        sleep($this->requestDelay);
         $postUrl = $this->submit($title, $url, $cookies);
         sleep($this->requestDelay);
-
-        $this->logout($cookies);
+        $this->logout($cookies, $logoutToken);
 
         return $postUrl;
     }
@@ -51,29 +51,13 @@ readonly class HackerNewsClient
      */
     private function login(): array
     {
-        $loginPageResponse = $this->httpClient->request('GET', self::BASE_URL . '/login', [
-            'headers' => $this->browserHeaders(),
-        ]);
-
-        $crawler = new Crawler($loginPageResponse->getContent(false));
-
         $formData = [
             'acct' => $this->username,
             'pw' => $this->password,
         ];
 
-        $crawler->filter('form[action="login"] input[type="hidden"]')->each(
-            function (Crawler $node) use (&$formData): void {
-                $name = $node->attr('name');
-                $value = $node->attr('value') ?? '';
-                if ($name !== null) {
-                    $formData[$name] = $value;
-                }
-            }
-        );
-
         $loginResponse = $this->httpClient->request('POST', self::BASE_URL . '/login', [
-            'headers' => $this->browserHeaders(),
+            'headers' => $this->browserHeaders([], true),
             'body' => $formData,
             'max_redirects' => 0,
         ]);
@@ -85,6 +69,18 @@ readonly class HackerNewsClient
         }
 
         return $cookies;
+    }
+
+    private function logoutToken(array $cookies): string
+    {
+        $authTokenResponse = $this->httpClient->request('GET', self::BASE_URL, [
+            'headers' => $this->browserHeaders($cookies),
+        ]);
+
+        $crawler = new Crawler($authTokenResponse->getContent(false));
+        $authTokenNode = $crawler->filter('#logout');
+        $authToken = $authTokenNode->attr('href') ?? '';
+        return $authToken;
     }
 
     /**
@@ -113,11 +109,11 @@ readonly class HackerNewsClient
         }
 
         $submitResponse = $this->httpClient->request('POST', self::BASE_URL . '/r', [
-            'headers' => $this->browserHeaders($cookies),
+            'headers' => $this->browserHeaders($cookies, true),
             'body' => [
                 'fnid'  => $fnid,
                 'fnop'  => $fnop,
-                'title' => $title,
+                'title' => substr($title, 0, 80),
                 'url'   => $url,
                 'text'  => '',
             ],
@@ -137,22 +133,33 @@ readonly class HackerNewsClient
             throw new ProviderException('HackerNews submit failed: redirected back to form (duplicate or banned)');
         }
 
+        if (str_contains($location, 'story-toofast')) {
+            throw new ProviderException('HackerNews submit failed: rate limit exceeded (story-toofast)');
+        }
+
         if ($location === '') {
             throw new ProviderException('HackerNews submit failed: no redirect location received');
         }
 
-        return str_starts_with($location, 'http') ? $location : self::BASE_URL . '/' . ltrim($location, '/');
+        $submittedItemsResponse = $this->httpClient->request('GET', self::BASE_URL . '/submitted?id=' . $this->username, [
+            'headers' => $this->browserHeaders($cookies),
+        ]);
+
+        $crawler = new Crawler($submittedItemsResponse->getContent(false));
+
+        $itemUrlPart = $crawler->filter('#bigbox > td > table > tbody > tr:nth-child(2) > td.subtext > span > a:nth-child(6)')->attr('href');
+
+        return self::BASE_URL . '/' . $itemUrlPart;
     }
 
     /**
      * @param array<string, string> $cookies
      */
-    private function logout(array $cookies): void
+    private function logout(array $cookies, string $logoutUrlTokenPart): void
     {
         try {
-            $this->httpClient->request('GET', self::BASE_URL . '/logout', [
+            $this->httpClient->request('GET', self::BASE_URL . '/' . $logoutUrlTokenPart, [
                 'headers' => $this->browserHeaders($cookies),
-                'max_redirects' => 0,
             ]);
         } catch (\Throwable) {
             // logout is best-effort, session will expire naturally
@@ -180,13 +187,17 @@ readonly class HackerNewsClient
      * @param array<string, string> $cookies
      * @return array<string, string>
      */
-    private function browserHeaders(array $cookies = []): array
+    private function browserHeaders(array $cookies = [], bool $isForm = false): array
     {
         $headers = [
             'User-Agent'      => self::USER_AGENT,
             'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language' => 'en-US,en;q=0.9',
         ];
+
+        if ($isForm) {
+            $headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        }
 
         if (!empty($cookies)) {
             $parts = [];
