@@ -103,7 +103,7 @@ final readonly class LinkedInProvider implements ProviderInterface
             ];
         }
 
-        // Handle image attachments — image takes priority over article
+        // Handle image attachments
         if ($message->hasAttachments()) {
             $images = array_filter(
                 $message->getAttachments(),
@@ -113,12 +113,20 @@ final readonly class LinkedInProvider implements ProviderInterface
             $first = reset($images);
             if ($first !== false) {
                 $imageUrn = $this->client->uploadImage($first);
-                $data['content'] = [
-                    'media' => [
-                        'id'      => $imageUrn,
-                        'altText' => $first instanceof Image ? ($first->getAltText() ?? '') : '',
-                    ],
-                ];
+                $altText = $first instanceof Image ? ($first->getAltText() ?? '') : '';
+
+                if ($message->getLink()) {
+                    // Link + image: use article with thumbnail
+                    $data['content']['article']['thumbnail'] = $imageUrn;
+                } else {
+                    // Image only: use media
+                    $data['content'] = [
+                        'media' => [
+                            'id'      => $imageUrn,
+                            'altText' => $altText,
+                        ],
+                    ];
+                }
             }
         }
 
