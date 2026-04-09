@@ -57,33 +57,29 @@ readonly class LinkedInClient
             'isReshareDisabledByAuthor' => false,
         ];
 
-        // Image content
-        if (isset($data['content']) && is_array($data['content'])
-            && isset($data['content']['media']) && is_array($data['content']['media'])
-        ) {
-            $media = $data['content']['media'];
-            $mediaId = isset($media['id']) && is_string($media['id']) ? $media['id'] : '';
-            $altText = isset($media['altText']) && is_string($media['altText']) ? $media['altText'] : '';
+        $content = isset($data['content']) && is_array($data['content']) ? $data['content'] : [];
+
+        // Image-only post
+        if (isset($content['media']) && is_array($content['media'])) {
+            $media = $content['media'];
             $payload['content'] = [
                 'media' => [
-                    'id' => $mediaId,
-                    'altText' => $altText,
+                    'id'      => isset($media['id']) && is_string($media['id']) ? $media['id'] : '',
+                    'altText' => isset($media['altText']) && is_string($media['altText']) ? $media['altText'] : '',
                 ],
             ];
-        // Article link content
-        } elseif (isset($data['content']) && is_array($data['content'])
-            && isset($data['content']['article']) && is_array($data['content']['article'])
-        ) {
-            $article = $data['content']['article'];
-            $source = isset($article['source']) && is_string($article['source']) ? $article['source'] : '';
-            $title = isset($article['title']) && is_string($article['title']) ? $article['title'] : '';
-            $payload['content'] = [
-                'article' => [
-                    'source' => $source,
-                    'title' => $title,
-                    'description' => '',
-                ],
+        // Article post (with optional thumbnail image)
+        } elseif (isset($content['article']) && is_array($content['article'])) {
+            $article = $content['article'];
+            $articlePayload = [
+                'source'      => isset($article['source']) && is_string($article['source']) ? $article['source'] : '',
+                'title'       => isset($article['title']) && is_string($article['title']) ? $article['title'] : '',
+                'description' => '',
             ];
+            if (isset($article['thumbnail']) && is_string($article['thumbnail'])) {
+                $articlePayload['thumbnail'] = $article['thumbnail'];
+            }
+            $payload['content'] = ['article' => $articlePayload];
         }
 
         $headers = [

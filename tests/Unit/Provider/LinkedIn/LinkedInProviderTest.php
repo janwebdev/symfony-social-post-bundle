@@ -157,8 +157,9 @@ class LinkedInProviderTest extends TestCase
         $this->clientMock->expects($this->once())
             ->method('createPost')
             ->with($this->callback(function (array $data): bool {
-                return isset($data['content']['media']['id'])
-                    && !isset($data['content']['article']);
+                return isset($data['content']['article'])
+                    && $data['content']['article']['thumbnail'] === 'urn:li:image:TEST456'
+                    && !isset($data['content']['media']);
             }))
             ->willReturn(['id' => 'urn:li:share:IMG789']);
 
