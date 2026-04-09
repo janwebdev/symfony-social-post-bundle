@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Janwebdev\SocialPostBundle\Provider\LinkedIn;
 
+use Janwebdev\SocialPostBundle\Message\Attachment\Image;
 use Janwebdev\SocialPostBundle\Message\Message;
 use Janwebdev\SocialPostBundle\Provider\ProviderInterface;
 use Janwebdev\SocialPostBundle\Provider\Result\PublishResult;
@@ -102,21 +103,21 @@ final readonly class LinkedInProvider implements ProviderInterface
             ];
         }
 
-        // Handle image attachments
+        // Handle image attachments — image takes priority over article
         if ($message->hasAttachments()) {
             $images = array_filter(
                 $message->getAttachments(),
                 fn($attachment) => $attachment->getType() === 'image'
             );
 
-            if (!empty($images)) {
-                $firstImage = reset($images);
-                if (!isset($data['content'])) {
-                    $data['content'] = [];
-                }
-                $data['content']['media'] = [
-                    'title' => mb_substr($message->getText(), 0, 100),
-                    'id' => $firstImage->getPath(), // Would need to upload first
+            $first = reset($images);
+            if ($first !== false) {
+                $imageUrn = $this->client->uploadImage($first);
+                $data['content'] = [
+                    'media' => [
+                        'id'      => $imageUrn,
+                        'altText' => $first instanceof Image ? ($first->getAltText() ?? '') : '',
+                    ],
                 ];
             }
         }

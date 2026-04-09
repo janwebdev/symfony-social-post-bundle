@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Janwebdev\SocialPostBundle\Tests\Unit\Provider\LinkedIn;
 
+use Janwebdev\SocialPostBundle\Message\Attachment\Image;
 use Janwebdev\SocialPostBundle\Message\MessageBuilder;
 use Janwebdev\SocialPostBundle\Provider\LinkedIn\LinkedInClient;
 use Janwebdev\SocialPostBundle\Provider\LinkedIn\LinkedInProvider;
@@ -107,5 +108,62 @@ class LinkedInProviderTest extends TestCase
         $this->assertTrue($result->isSuccess());
         $this->assertEquals('urn:li:share:987654321', $result->getPostId());
         $this->assertStringContainsString('987654321', $result->getPostUrl() ?? '');
+    }
+
+    public function testPublishWithImage(): void
+    {
+        $image = new Image('/tmp/test.jpg', 'A test image');
+
+        $message = MessageBuilder::create()
+            ->setText('Post with image')
+            ->addAttachment($image)
+            ->build();
+
+        $this->clientMock->expects($this->once())
+            ->method('uploadImage')
+            ->with($image)
+            ->willReturn('urn:li:image:TEST123');
+
+        $this->clientMock->expects($this->once())
+            ->method('createPost')
+            ->with($this->callback(function (array $data): bool {
+                return isset($data['content']['media']['id'])
+                    && $data['content']['media']['id'] === 'urn:li:image:TEST123'
+                    && isset($data['content']['media']['altText'])
+                    && $data['content']['media']['altText'] === 'A test image';
+            }))
+            ->willReturn(['id' => 'urn:li:share:IMG456']);
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertSame('urn:li:share:IMG456', $result->getPostId());
+    }
+
+    public function testPublishWithImageAndLink(): void
+    {
+        $image = new Image('/tmp/test.jpg');
+
+        $message = MessageBuilder::create()
+            ->setText('Post with image and link')
+            ->setLink('https://example.com')
+            ->addAttachment($image)
+            ->build();
+
+        $this->clientMock->expects($this->once())
+            ->method('uploadImage')
+            ->willReturn('urn:li:image:TEST456');
+
+        $this->clientMock->expects($this->once())
+            ->method('createPost')
+            ->with($this->callback(function (array $data): bool {
+                return isset($data['content']['media']['id'])
+                    && !isset($data['content']['article']);
+            }))
+            ->willReturn(['id' => 'urn:li:share:IMG789']);
+
+        $result = $this->provider->publish($message);
+
+        $this->assertTrue($result->isSuccess());
     }
 }
