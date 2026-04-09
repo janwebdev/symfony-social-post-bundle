@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Janwebdev\SocialPostBundle\Provider\LinkedIn;
 
 use Janwebdev\SocialPostBundle\Http\ClientInterface;
+use Janwebdev\SocialPostBundle\Message\Attachment\AttachmentInterface;
 use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
 
 /**
@@ -101,5 +102,90 @@ readonly class LinkedInClient
             : ((isset($linkedinHeader[0]) && is_string($linkedinHeader[0])) ? $linkedinHeader[0] : null);
 
         return ['id' => $postId];
+    }
+
+    /**
+     * Initialize an image upload and return upload URL and image URN.
+     *
+     * @return array{uploadUrl: string, imageUrn: string}
+     */
+    private function initializeImageUpload(): array
+    {
+        $url = self::API_BASE_URL . '/images?action=initializeUpload';
+
+        $payload = [
+            'initializeUploadRequest' => [
+                'owner' => 'urn:li:organization:' . $this->organizationId,
+            ],
+        ];
+
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->accessToken,
+            'Content-Type' => 'application/json',
+            'X-Restli-Protocol-Version' => '2.0.0',
+            'LinkedIn-Version' => '202503',
+        ];
+
+        $response = $this->httpClient->post($url, $headers, $payload);
+
+        if (!$response->isSuccessful()) {
+            $error = $response->toArray();
+            $errorMessage = isset($error['message']) && is_string($error['message']) ? $error['message'] : 'Unknown error';
+            throw new ProviderException("LinkedIn image initialize failed: {$errorMessage}");
+        }
+
+        $data = $response->toArray();
+        $value = isset($data['value']) && is_array($data['value']) ? $data['value'] : [];
+        $uploadUrl = isset($value['uploadUrl']) && is_string($value['uploadUrl'])
+            ? $value['uploadUrl']
+            : null;
+        $imageUrn = isset($value['image']) && is_string($value['image'])
+            ? $value['image']
+            : null;
+
+        if ($uploadUrl === null || $imageUrn === null) {
+            throw new ProviderException('LinkedIn image initialize returned unexpected response');
+        }
+
+        return ['uploadUrl' => $uploadUrl, 'imageUrn' => $imageUrn];
+    }
+
+    private function uploadImageBinary(string $uploadUrl, string $binary): void
+    {
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->accessToken,
+        ];
+
+        $response = $this->httpClient->put($uploadUrl, $headers, $binary);
+
+        if (!$response->isSuccessful()) {
+            throw new ProviderException('LinkedIn image binary upload failed');
+        }
+    }
+
+    public function uploadImage(AttachmentInterface $attachment): string
+    {
+        $path = $attachment->getPath();
+
+        if ($attachment->isLocal()) {
+            if (!file_exists($path)) {
+                throw new ProviderException("File not found: {$path}");
+            }
+            $binary = file_get_contents($path);
+            if ($binary === false) {
+                throw new ProviderException("Failed to read file: {$path}");
+            }
+        } else {
+            $response = $this->httpClient->get($path);
+            if (!$response->isSuccessful()) {
+                throw new ProviderException("Failed to download image from: {$path}");
+            }
+            $binary = $response->getBody();
+        }
+
+        $result = $this->initializeImageUpload();
+        $this->uploadImageBinary($result['uploadUrl'], $binary);
+
+        return $result['imageUrn'];
     }
 }

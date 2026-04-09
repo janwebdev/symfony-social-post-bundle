@@ -87,4 +87,25 @@ final readonly class Client implements ClientInterface
             );
         }
     }
+
+    public function put(string $url, array $headers, string $body): Response
+    {
+        try {
+            $response = $this->httpClient->request('PUT', $url, [
+                'headers' => $headers,
+                'body' => $body,
+            ]);
+
+            return new Response(
+                statusCode: $response->getStatusCode(),
+                body: $response->getContent(false),
+                headers: $response->getHeaders(false),
+            );
+        } catch (TransportExceptionInterface $e) {
+            throw new Exception\HttpException(
+                "HTTP PUT request failed: {$e->getMessage()}",
+                previous: $e,
+            );
+        }
+    }
 }
