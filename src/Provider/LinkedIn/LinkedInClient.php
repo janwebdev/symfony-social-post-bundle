@@ -154,12 +154,19 @@ readonly class LinkedInClient
     {
         $headers = [
             'Authorization' => 'Bearer ' . $this->accessToken,
+            'Content-Type' => 'application/octet-stream',
         ];
 
         $response = $this->httpClient->put($uploadUrl, $headers, $binary);
 
         if (!$response->isSuccessful()) {
-            throw new ProviderException('LinkedIn image binary upload failed');
+            throw new ProviderException(
+                sprintf(
+                    'LinkedIn image binary upload failed: HTTP %d — %s',
+                    $response->getStatusCode(),
+                    $response->getBody(),
+                )
+            );
         }
     }
 
