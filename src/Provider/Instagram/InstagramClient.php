@@ -15,7 +15,7 @@ use Janwebdev\SocialPostBundle\Provider\Exception\ProviderException;
  */
 readonly class InstagramClient
 {
-    private const API_BASE_URL = 'https://graph.facebook.com';
+    private const API_BASE_URL = 'https://graph.instagram.com';
 
     public function __construct(
         private ClientInterface $httpClient,
